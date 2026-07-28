@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyPulse — Static Code Analyzer & Code Smell Detector</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="nav-brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-code-compare"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>PyPulse <span class="badge-tag">Static Analyzer</span></h1>
+                    <p class="tagline">Python Code Quality, Security & AST Metrics Suite</p>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button id="btn-load-sample" class="btn btn-secondary" title="Load sample calculator.py file">
+                    <i class="fa-solid fa-flask"></i> Load Sample (calculator.py)
+                </button>
+                <label for="file-upload-input" class="btn btn-secondary" title="Upload custom .py file">
+                    <i class="fa-solid fa-file-arrow-up"></i> Upload .py File
+                    <input type="file" id="file-upload-input" accept=".py,.txt" hidden>
+                </label>
+                <button id="btn-export-report" class="btn btn-secondary" title="Download Analysis Report JSON" style="display:none;">
+                    <i class="fa-solid fa-download"></i> Export JSON
+                </button>
+                <a id="btn-download-pdf" class="btn btn-primary" href="#" style="display:none;" download>
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Workbench Workspace -->
+        <main class="workbench">
+            <!-- Left Pane: History Dashboard -->
+            <section class="pane history-pane" style="flex: 1; border-right: 1px solid var(--border-light); background: var(--bg-card); display: flex; flex-direction: column;">
+                <div class="pane-header">
+                    <div class="pane-title">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Analysis History</span>
+                    </div>
+                    <div class="editor-tools">
+                        <span class="file-status" id="pipeline-status" style="border-color: var(--accent-amber); color: var(--accent-amber);">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="history-container" style="padding: 20px; overflow-y: auto; flex: 1;">
+                    <table class="data-table" id="history-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr><td colspan="4" class="text-muted text-center">Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Right Pane: Analysis Dashboard -->
+            <section class="pane dashboard-pane">
+                <!-- Overview Stats & Health Grade -->
+                <div class="dashboard-header-cards">
+                    <!-- Health Score Gauge -->
+                    <div class="card score-card">
+                        <div class="gauge-box">
+                            <svg class="gauge-ring" viewBox="0 0 100 100">
+                                <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
+                                <circle class="gauge-progress" id="gauge-progress" cx="50" cy="50" r="42"></circle>
+                            </svg>
+                            <div class="score-display">
+                                <span class="score-num" id="score-num">9.8</span>
+                                <span class="score-label">SCORE</span>
+                            </div>
+                        </div>
+                        <div class="grade-box">
+                            <div class="grade-badge grade-a" id="grade-badge">A+</div>
+                            <span class="grade-desc" id="grade-desc">Code Score: 9.8 / 10</span>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Metric Cards -->
+                    <div class="metrics-grid">
+                        <div class="card metric-card">
+                            <div class="metric-icon icon-cyan">
+                                <i class="fa-solid fa-folder"></i>
+                            </div>
+                            <div class="metric-data">
+                                <span class="metric-value" id="metric-project-name" style="font-size: 1.2rem;">Unknown</span>
+                                <span class="metric-label">Project Name</span>
+                            </div>
+                        </div>
+
+                        <div class="card metric-card">
+                            <div class="metric-icon icon-amber">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div class="metric-data">
+                                <span class="metric-value" id="metric-last-time" style="font-size: 1.2rem;">Never</span>
+                                <span class="metric-label">Last Analysis</span>
+                            </div>
+                        </div>
+
+                        <div class="card metric-card">
+                            <div class="metric-icon icon-blue">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div class="metric-data">
+                                <span class="metric-value" id="metric-warnings">0</span>
+                                <span class="metric-label">Warnings</span>
+                            </div>
+                        </div>
+
+                        <div class="card metric-card">
+                            <div class="metric-icon icon-purple">
+                                <i class="fa-solid fa-bug"></i>
+                            </div>
+                            <div class="metric-data">
+                                <span class="metric-value" id="metric-errors">0</span>
+                                <span class="metric-label">Errors</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="metric-icon icon-rose">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div class="metric-data">
+                                <span class="metric-value" id="metric-security">0</span>
+                                <span class="metric-label">Security Issues</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Script File -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
