@@ -6,4 +6,5 @@ flake8==7.1.0
 radon==6.0.1
 bandit==1.7.9
 reportlab==4.2.2
-requests==2.32.3
+requests>=2.31.0
+gunicorn>=21.2.0
