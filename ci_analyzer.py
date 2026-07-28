@@ -94,7 +94,12 @@ def generate_pdf(metrics, filename="Analysis_Report.pdf"):
     y -= 20
     
     c.setFont("Helvetica", 10)
-    for issue in metrics['pylint_issues'][:5]: # Show top 5 for brevity
+    
+    # Sort issues to put errors/fatals first, then warnings, then others
+    severity_order = {'fatal': 0, 'error': 1, 'warning': 2, 'refactor': 3, 'convention': 4}
+    sorted_issues = sorted(metrics['pylint_issues'], key=lambda x: severity_order.get(x.get('type', 'convention'), 5))
+    
+    for issue in sorted_issues[:15]: # Show top 15 prioritized issues
         text = f"Pylint ({issue.get('type')}): {issue.get('path')}:{issue.get('line')} - {issue.get('message')}"
         lines = simpleSplit(text, "Helvetica", 10, width - 100)
         for line in lines:
